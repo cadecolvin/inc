@@ -1,0 +1,10 @@
+To compile .c files into shared objects, use the following command:
+    gcc -fPIC -shared -o [output].so [input].c
+
+A new project structure should look like the following
+|---src/
+|   |---tests/
+|---lib/
+|---bin/
+|   |---obj/
+|---makefile
