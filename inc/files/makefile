@@ -1,4 +1,4 @@
-makefile = """TARGET={target}
+TARGET={target}
 
 CC=gcc
 CFLAGS=-Wall -Wextra -I.
@@ -24,4 +24,3 @@ $(OBJECTS): $(OBJDIR)%.o: $(SRCDIR)%.c
 clean:
     rm -f $(OBJECTS)
     rm -f $(BINDIR)$(TARGET)
-"""
