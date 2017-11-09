@@ -12,13 +12,15 @@ from inc import test_utils
 
 def new(args):
     """ Logic behind the 'new' argument """
+    # Create the directory structure names
     project_dir = pathlib.Path(args.name)
-    src_dir = pathlib.Path(project_dir.joinpath('src'))
-    lib_dir = pathlib.Path(project_dir.joinpath('lib'))
-    bin_dir = pathlib.Path(project_dir.joinpath('bin'))
-    tst_dir = pathlib.Path(src_dir.joinpath('tests'))
-    obj_dir = pathlib.Path(bin_dir.joinpath('obj'))
+    src_dir = project_dir.joinpath('src')
+    lib_dir = project_dir.joinpath('lib')
+    bin_dir = project_dir.joinpath('bin')
+    tst_dir = src_dir.joinpath('tests')
+    obj_dir = bin_dir.joinpath('obj')
 
+    # Build out the directory structure
     src_dir.mkdir(parents=True, exist_ok=True)
     tst_dir.mkdir(parents=True, exist_ok=True)
     lib_dir.mkdir(parents=True, exist_ok=True)
@@ -27,32 +29,28 @@ def new(args):
 
     # Deploy the default files
     deploy_makefile(args.name, project_dir.absolute())
-    deploy_unittest(tst_dir.absolute())
+    deploy_unittest(tst_dir.resolve())
 
 def test(args):
     """ Logic behind the 'test' argument """
-    # 1: Get all the filenames of the test files
-    test_dir = os.getcwd() + '/src/tests'
-    test_files = test_utils.get_test_filenames(test_dir)
+    # Get the filenames of the test files
+    src_dir = os.getcwd() + '/src'
+    test_files = test_utils.get_test_files(src_dir)
 
-    # 2: Compile each .c file into a .so file
+    # For each test file compile the shared object and run tests
     for f in test_files:
-        in_file = test_dir + '/' + f + '.c'
-        out_file = test_dir + '/' + f + '.so'
-        subprocess.run(['gcc',in_file,'-fPIC','-shared','-o',out_file]) 
+        c_file = pathlib.Path(f)
+        so_file = c_file.with_suffix('.so')
+        subprocess.run(['gcc',c_file.resolve(),
+                        '-fPIC','-shared','-o',so_file.absolute()]) 
 
-    # 3: Load each .so file
-    for f in test_files:
-        c_file = test_dir + '/' + f + '.c'
-        so_file = test_dir + '/' + f + '.so'
         test_functions = test_utils.get_test_functions(c_file)
         test_file = ctypes.CDLL(so_file)
         for function in test_functions:
             test_file[function]()
 
-    # 4: Parse the associated c file for test method names
-    # 5: Execute each test method within the .so file
-
+        # Delete the .so file to reduce clutter
+        so_file.unlink()
 
 def main():
     parser = argparse.ArgumentParser(description='Manages and tests c projects')

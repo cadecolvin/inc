@@ -1,13 +1,17 @@
 import os
+import pathlib
 import re
 
-def get_test_filenames(path):
-    """ Gets any filenames that follow the format [path]/[Tt]est_*.c """
+def get_test_files(path):
+    """ Recursively searches path for any filenames that follow the format test_*.c """
+
     test_files = []
     for root, dirs, files in os.walk(path):
-        [test_files.append(f) for f in files if f.lower().endswith('.c')]
+        for f in files:
+            if('test_' in f.lower() and f.lower().endswith('.c')):
+                test_files.append(os.path.join(root, f))
 
-    return [os.path.splitext(f)[0] for f in test_files]
+    return test_files
 
 def get_test_functions(test_file):
     # Find the methods by parsing the associated .c file
