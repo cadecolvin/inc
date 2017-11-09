@@ -8,6 +8,8 @@ import shutil
 import subprocess
 import sys
 
+from inc import test_utils
+
 def new(args):
     """ Logic behind the 'new' argument """
     project_dir = pathlib.Path(args.name)
@@ -30,8 +32,24 @@ def new(args):
 def test(args):
     """ Logic behind the 'test' argument """
     # 1: Get all the filenames of the test files
+    test_dir = os.getcwd() + '/src/tests'
+    test_files = test_utils.get_test_filenames(test_dir)
+
     # 2: Compile each .c file into a .so file
+    for f in test_files:
+        in_file = test_dir + '/' + f + '.c'
+        out_file = test_dir + '/' + f + '.so'
+        subprocess.run(['gcc',in_file,'-fPIC','-shared','-o',out_file]) 
+
     # 3: Load each .so file
+    for f in test_files:
+        c_file = test_dir + '/' + f + '.c'
+        so_file = test_dir + '/' + f + '.so'
+        test_functions = test_utils.get_test_functions(c_file)
+        test_file = ctypes.CDLL(so_file)
+        for function in test_functions:
+            test_file[function]()
+
     # 4: Parse the associated c file for test method names
     # 5: Execute each test method within the .so file
 
@@ -43,6 +61,9 @@ def main():
     parser_new = subparsers.add_parser('new', help='Creates a new c project')
     parser_new.add_argument('name', help='The name of the new project')
     parser_new.set_defaults(func=new)
+
+    parser_test = subparsers.add_parser('test', help='Runs unit tests')
+    parser_test.set_defaults(func=test)
 
     if len(sys.argv[1:]) == 0:
         parser.print_help()
